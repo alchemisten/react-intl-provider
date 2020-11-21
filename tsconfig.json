@@ -1,0 +1,33 @@
+{
+    "compilerOptions": {
+        "lib": [ "dom", "esnext.intl", "es2017.intl", "es2018.intl", "ES2015" ],
+        "target": "es5",
+        "module": "commonjs",
+        "moduleResolution": "Node",
+        "resolveJsonModule": true,
+        "isolatedModules": true,
+        "sourceMap": true,
+        "declaration": true,
+        "esModuleInterop": true,
+        "noImplicitReturns": true,
+        "noImplicitThis": true,
+        "noImplicitAny": true,
+        "strictNullChecks": true,
+        "suppressImplicitAnyIndexErrors": true,
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
+        "allowSyntheticDefaultImports": true,
+        "outDir": "./dist",
+        "jsx": "react",
+        "types": [
+            "react"
+        ]
+    },
+    "files": [
+        "src/index.ts"
+    ],
+    "exclude": [
+        "node_modules",
+        "typings"
+    ]
+}
