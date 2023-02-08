@@ -10,9 +10,9 @@
 	"scripts": {
 		"build": "tsc",
 		"format": "prettier --write \"src/**/*.ts\" \"src/**/*.js\"",
-		"lint": "tslint -p tsconfig.json",
-		"prepare": "npm run build",
-		"preversion": "npm run lint"
+		"lint": "eslint . --max-warnings 0",
+		"prepare": "yarn build",
+		"preversion": "yarn lint"
 	},
 	"repository": {
 		"type": "git",
@@ -44,6 +44,7 @@
 		"lodash": "^4.17.20"
 	},
 	"peerDependencies": {
+		"react": ">=16.13 < 17",
 		"react-intl": "^5.10.4"
 	}
 }
