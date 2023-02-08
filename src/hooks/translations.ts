@@ -11,7 +11,7 @@ export const useTranslationsInfo = (languageNamePrefix = '__lang.', languageName
             languageName: intl.formatMessage({ id: languageNameKey }),
             currentLanguage: intl.formatMessage({ id: `${languageNamePrefix}${languageKey}` }),
         };
-    }, [languageKey]);
+    }, [intl, languageKey, languageNameKey, languageNamePrefix]);
 
     const languages = useMemo(() => {
         return Object.keys(translations).map((language) => {
@@ -20,7 +20,7 @@ export const useTranslationsInfo = (languageNamePrefix = '__lang.', languageName
                 name: intl.formatMessage({ id: `${languageNamePrefix}${language}` }),
             };
         });
-    }, [translations, currentLanguage]);
+    }, [translations, intl, languageNamePrefix]);
 
     return {
         languageKey,

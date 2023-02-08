@@ -8,7 +8,7 @@ export interface TranslationsContextType {
     translations: TranslationsType;
     currentLanguage: string;
     setLanguage: (key: string) => void;
-    addTranslations: (translations: TranslationsType<any>) => void;
+    addTranslations: (translations: TranslationsType<unknown>) => void;
 }
 
 export type TranslationState = {

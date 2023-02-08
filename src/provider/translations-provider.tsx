@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { IntlProvider } from 'react-intl';
 
 import merge from 'lodash/merge';
@@ -10,8 +10,8 @@ export const DEFAULT_LANGUAGE = window ? window.navigator.language.replace(/^([\
 export const TranslationsContext = createContext<TranslationsContextType>({
     translations: {},
     currentLanguage: DEFAULT_LANGUAGE,
-    setLanguage: (_: string) => {},
-    addTranslations: (_: TranslationsType<any>) => {},
+    setLanguage: () => undefined,
+    addTranslations: () => undefined,
 });
 
 export const useCreateTranslations = (initialLanguage: string, initialTranslations: TranslationsType) => {
@@ -20,16 +20,19 @@ export const useCreateTranslations = (initialLanguage: string, initialTranslatio
         currentLanguage: initialLanguage,
     });
 
-    const addTranslations = (translations: TranslationsType<any>) => {
-        const flattenedLang = Object.keys(translations).reduce<TranslationsType>((stack, lang: string) => {
-            stack[lang] = flattenObject(translations[lang]);
-            return stack;
-        }, {});
-        updateTranslationState({
-            translations: merge(translations, flattenedLang),
-            currentLanguage,
-        });
-    };
+    const addTranslations = useCallback(
+        (newTranslations: TranslationsType<unknown>) => {
+            const flattenedLang = Object.keys(newTranslations).reduce<TranslationsType>((acc, lang: string) => {
+                acc[lang] = flattenObject(newTranslations[lang]);
+                return acc;
+            }, {});
+            updateTranslationState({
+                translations: merge(newTranslations, flattenedLang),
+                currentLanguage,
+            });
+        },
+        [currentLanguage]
+    );
 
     const setLanguage = (lang: string) => {
         updateTranslationState({
@@ -40,7 +43,7 @@ export const useCreateTranslations = (initialLanguage: string, initialTranslatio
 
     useEffect(() => {
         addTranslations(initialTranslations);
-    }, [initialTranslations]);
+    }, [addTranslations, initialTranslations]);
 
     return {
         translations,
@@ -68,11 +71,9 @@ export const TranslationsProvider: React.FC<LanguageProviderProps> = ({
         if (initialLanguage) {
             setLanguage(initialLanguage);
         }
-    }, [initialLanguage]);
+    }, [initialLanguage, setLanguage]);
 
     const { currentLanguage, translations: currentTranslations } = translations;
-
-    const onIntlError = () => {};
 
     return (
         <TranslationsContext.Provider value={translations}>
@@ -80,7 +81,6 @@ export const TranslationsProvider: React.FC<LanguageProviderProps> = ({
                 defaultLocale={defaultLocale}
                 locale={currentLanguage}
                 messages={currentTranslations[currentLanguage]}
-                onError={onIntlError}
             >
                 {children}
             </IntlProvider>
