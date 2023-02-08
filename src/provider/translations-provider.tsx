@@ -1,4 +1,4 @@
-import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import React, { createContext, FC, useCallback, useContext, useEffect, useState } from 'react';
 import { IntlProvider } from 'react-intl';
 
 import merge from 'lodash/merge';
@@ -15,6 +15,7 @@ export const TranslationsContext = createContext<TranslationsContextType>({
 });
 
 export const useCreateTranslations = (initialLanguage: string, initialTranslations: TranslationsType) => {
+    // TODO: Would it make sense to split this into two states?
     const [{ translations, currentLanguage }, updateTranslationState] = useState<TranslationState>({
         translations: initialTranslations,
         currentLanguage: initialLanguage,
@@ -57,7 +58,7 @@ export const useTranslations = (): TranslationsContextType => {
     return useContext(TranslationsContext);
 };
 
-export const TranslationsProvider: React.FC<LanguageProviderProps> = ({
+export const TranslationsProvider: FC<LanguageProviderProps> = ({
     initialLanguage,
     defaultLocale,
     initialTranslations,
@@ -67,6 +68,7 @@ export const TranslationsProvider: React.FC<LanguageProviderProps> = ({
 
     const { setLanguage } = useTranslations();
 
+    // TODO: Is this effect even necessary when initialLanguage is passed to useCreateTranslations?
     useEffect(() => {
         if (initialLanguage) {
             setLanguage(initialLanguage);

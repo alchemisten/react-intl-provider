@@ -10,9 +10,7 @@
 	"scripts": {
 		"build": "tsc",
 		"format": "prettier --write \"src/**/*.ts\" \"src/**/*.js\"",
-		"lint": "eslint . --max-warnings 0",
-		"prepare": "yarn build",
-		"preversion": "yarn lint"
+		"lint": "eslint . --max-warnings 0"
 	},
 	"repository": {
 		"type": "git",
@@ -32,19 +30,19 @@
 	"homepage": "https://github.com/alchemisten/react-intl-provider#readme",
 	"devDependencies": {
 		"@schablone/eslint-config": "^4.0.1",
-		"@types/lodash": "^4.14.165",
-		"@types/react": "^16.13.1",
+		"@types/lodash": "^4.14.191",
+		"@types/react": "^18.0.27",
 		"eslint": "^8.33.0",
 		"prettier": "^2.8.4",
 		"typescript": "^4.9.5",
-		"react": "^16.13.1",
-		"react-intl": "^5.10.4"
+		"react": "^18.2.0",
+		"react-intl": "^6.2.8"
 	},
 	"dependencies": {
-		"lodash": "^4.17.20"
+		"lodash": "^4.17.21"
 	},
 	"peerDependencies": {
-		"react": ">=16.13 < 17",
-		"react-intl": "^5.10.4"
+		"react": ">=18.2 < 19",
+		"react-intl": ">=6.28 < 7"
 	}
 }

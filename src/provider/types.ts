@@ -1,3 +1,5 @@
+import { PropsWithChildren } from 'react';
+
 export interface TranslationsType<T = string> {
     [key: string]: {
         [key: string]: T;
@@ -16,8 +18,8 @@ export type TranslationState = {
     currentLanguage: string;
 };
 
-export type LanguageProviderProps = {
+export interface LanguageProviderProps extends PropsWithChildren {
     defaultLocale?: string;
     initialLanguage: string;
     initialTranslations: TranslationsType;
-};
+}
