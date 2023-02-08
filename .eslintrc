@@ -1,0 +1,3 @@
+{
+    "extends": "@schablone/eslint-config"
+}
