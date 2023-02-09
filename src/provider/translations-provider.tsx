@@ -15,7 +15,6 @@ export const TranslationsContext = createContext<TranslationsContextType>({
 });
 
 export const useCreateTranslations = (initialLanguage: string, initialTranslations: TranslationsType) => {
-    // TODO: Would it make sense to split this into two states?
     const [{ translations, currentLanguage }, updateTranslationState] = useState<TranslationState>({
         translations: initialTranslations,
         currentLanguage: initialLanguage,
@@ -68,7 +67,6 @@ export const TranslationsProvider: FC<LanguageProviderProps> = ({
 
     const { setLanguage } = useTranslations();
 
-    // TODO: Is this effect even necessary when initialLanguage is passed to useCreateTranslations?
     useEffect(() => {
         if (initialLanguage) {
             setLanguage(initialLanguage);
