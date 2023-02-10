@@ -1,6 +1,6 @@
 {
 	"name": "react-intl-provider",
-	"version": "0.0.4",
+	"version": "1.0.0",
 	"description": "Simple React provider that enables language configuration of intl object",
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
