@@ -1,13 +1,15 @@
 export const flattenObject = (obj: any) => {
     const toReturn: any = {};
 
-    for (let i in obj) {
-        if (!obj.hasOwnProperty(i)) continue;
+    for (const i in obj) {
+        // eslint-disable-next-line no-continue
+        if (!Object.prototype.hasOwnProperty.call(obj, i)) continue;
 
-        if ((typeof obj[i] === 'object')) {
+        if (typeof obj[i] === 'object') {
             const flatObject = flattenObject(obj[i]);
-            for (let x in flatObject) {
-                if (!flatObject.hasOwnProperty(x)) continue;
+            for (const x in flatObject) {
+                // eslint-disable-next-line no-continue
+                if (!Object.prototype.hasOwnProperty.call(flatObject, x)) continue;
 
                 toReturn[`${i}.${x}`] = flatObject[x];
             }
