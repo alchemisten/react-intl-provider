@@ -1,89 +1,72 @@
-import React, { createContext, FC, useCallback, useContext, useEffect, useState } from 'react';
+import React, { createContext, FC, useCallback, useContext, useState } from 'react';
 import { IntlProvider } from 'react-intl';
-
 import merge from 'lodash/merge';
-import { flattenObject } from '../utils';
-import { LanguageProviderProps, TranslationsContextType, TranslationState, TranslationsType } from './types';
+
+import { LanguageProviderProps, TranslationsContextType, TranslationsType } from './types';
+import { flattenTranslations } from '../utils';
 
 export const DEFAULT_LANGUAGE = window ? window.navigator.language.replace(/^([\w]+)(-.*)/gi, '$1') : 'en';
 
-export const TranslationsContext = createContext<TranslationsContextType>({
-    translations: {},
-    currentLanguage: DEFAULT_LANGUAGE,
-    setLanguage: () => undefined,
-    addTranslations: () => undefined,
-});
-
-export const useCreateTranslations = (initialLanguage: string, initialTranslations: TranslationsType) => {
-    const [{ translations, currentLanguage }, updateTranslationState] = useState<TranslationState>({
-        translations: initialTranslations,
-        currentLanguage: initialLanguage,
-    });
-
-    const addTranslations = useCallback(
-        (newTranslations: TranslationsType<unknown>) => {
-            const flattenedLang = Object.keys(newTranslations).reduce<TranslationsType>((acc, lang: string) => {
-                acc[lang] = flattenObject(newTranslations[lang]);
-                return acc;
-            }, {});
-            updateTranslationState({
-                translations: merge(newTranslations, flattenedLang),
-                currentLanguage,
-            });
-        },
-        [currentLanguage]
-    );
-
-    const setLanguage = (lang: string) => {
-        updateTranslationState({
-            translations,
-            currentLanguage: lang,
-        });
-    };
-
-    useEffect(() => {
-        addTranslations(initialTranslations);
-    }, [addTranslations, initialTranslations]);
-
-    return {
-        translations,
-        currentLanguage,
-        setLanguage,
-        addTranslations,
-    };
-};
+export const TranslationsContext = createContext<TranslationsContextType | undefined>(undefined);
 
 export const useTranslations = (): TranslationsContextType => {
-    return useContext(TranslationsContext);
+  const context = useContext(TranslationsContext);
+  if (!context) {
+    throw new Error('useTranslations must be used within a TranslationsProvider');
+  }
+  return context;
 };
 
 export const TranslationsProvider: FC<LanguageProviderProps> = ({
-    initialLanguage,
-    defaultLocale,
-    initialTranslations,
-    children,
+  initialLanguage,
+  defaultLocale,
+  initialTranslations,
+  children,
 }) => {
-    const translations = useCreateTranslations(initialLanguage, initialTranslations);
+  let parentContext: TranslationsContextType | undefined
+  try {
+    parentContext = useTranslations();
+  } catch (e) {
+    // no parent context
+  }
+  const [translations, setTranslations] = useState<TranslationsType>(() => {
+    if (parentContext) {
+      parentContext.addTranslations(initialTranslations);
+    }
+    return flattenTranslations(initialTranslations)
+  });
+  const [language, setLanguage] = useState<string>(parentContext?.currentLanguage || initialLanguage || DEFAULT_LANGUAGE);
 
-    const { setLanguage } = useTranslations();
+  const addTranslations = useCallback((newTranslations: TranslationsType<unknown>) => {
+    if (parentContext && parentContext.addTranslations) {
+      parentContext.addTranslations(newTranslations);
+    }
+    setTranslations(merge(translations, flattenTranslations(newTranslations)));
+  }, [parentContext]);
 
-    useEffect(() => {
-        if (initialLanguage) {
-            setLanguage(initialLanguage);
-        }
-    }, [initialLanguage, setLanguage]);
+  const setCurrentLanguage = useCallback((lang: string) => {
+    if (parentContext && parentContext.setLanguage) {
+      parentContext.setLanguage(lang);
+    }
+    setLanguage(lang);
+  }, [parentContext]);
 
-    const { currentLanguage, translations: currentTranslations } = translations;
+  const mergedValue = {
+    translations: parentContext?.translations || translations,
+    currentLanguage: parentContext?.currentLanguage || language,
+    setLanguage: setCurrentLanguage,
+    addTranslations,
+  };
 
-    return (
-        <TranslationsContext.Provider value={translations}>
-            <IntlProvider
-                defaultLocale={defaultLocale}
-                locale={currentLanguage}
-                messages={currentTranslations[currentLanguage]}
-            >
-                {children}
-            </IntlProvider>
-        </TranslationsContext.Provider>
-    );
+  return (
+    <TranslationsContext.Provider value={mergedValue}>
+      <IntlProvider
+          defaultLocale={defaultLocale}
+          locale={mergedValue.currentLanguage}
+          messages={mergedValue.translations[language]}
+      >
+        {children}
+      </IntlProvider>
+    </TranslationsContext.Provider>
+  );
 };

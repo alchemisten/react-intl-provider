@@ -1,3 +1,5 @@
+import { TranslationsType } from './provider';
+
 export const flattenObject = (obj: any) => {
     const toReturn: any = {};
 
@@ -20,3 +22,10 @@ export const flattenObject = (obj: any) => {
 
     return toReturn;
 };
+
+export const flattenTranslations = (translations: TranslationsType<unknown>): TranslationsType => {
+    return Object.keys(translations).reduce<TranslationsType>((acc, lang: string) => {
+        acc[lang] = flattenObject(translations[lang]);
+        return acc;
+    }, {});
+}

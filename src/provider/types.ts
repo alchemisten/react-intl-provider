@@ -20,6 +20,6 @@ export type TranslationState = {
 
 export interface LanguageProviderProps extends PropsWithChildren {
     defaultLocale?: string;
-    initialLanguage: string;
+    initialLanguage?: string;
     initialTranslations: TranslationsType;
 }
