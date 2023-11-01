@@ -12,12 +12,12 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: 18
-          cache: yarn
+          cache: npm
           always-auth: true
       - run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN_TECHUSER }}" > ~/.npmrc
-      - run: yarn install --frozen-lockfile
-      - run: yarn lint
-      - run: yarn build
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build
       - run: npx semantic-release
         env:
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN_TECHUSER }}
