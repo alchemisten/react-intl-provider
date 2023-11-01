@@ -1,9 +1,9 @@
-import React, { createContext, FC, useCallback, useContext, useState } from 'react';
+import React, { createContext, FC, useCallback, useContext, useMemo, useState } from 'react';
 import { IntlProvider } from 'react-intl';
 import merge from 'lodash/merge';
 
-import { LanguageProviderProps, TranslationsContextType, TranslationsType } from './types';
 import { flattenTranslations } from '../utils';
+import type { LanguageProviderProps, TranslationsContextType, TranslationsType } from '../types';
 
 export const DEFAULT_LANGUAGE = window ? window.navigator.language.replace(/^([\w]+)(-.*)/gi, '$1') : 'en';
 
@@ -23,47 +23,60 @@ export const TranslationsProvider: FC<LanguageProviderProps> = ({
   initialTranslations,
   children,
 }) => {
-  let parentContext: TranslationsContextType | undefined
-  try {
-    parentContext = useTranslations();
-  } catch (e) {
-    // no parent context
-  }
+  const parentContext = useContext(TranslationsContext);
   const [translations, setTranslations] = useState<TranslationsType>(() => {
     if (parentContext) {
       parentContext.addTranslations(initialTranslations);
     }
-    return flattenTranslations(initialTranslations)
+    return flattenTranslations(initialTranslations);
   });
-  const [language, setLanguage] = useState<string>(parentContext?.currentLanguage || initialLanguage || DEFAULT_LANGUAGE);
+  const [language, setLanguage] = useState<string>(
+    parentContext?.currentLanguage || initialLanguage || DEFAULT_LANGUAGE,
+  );
 
-  const addTranslations = useCallback((newTranslations: TranslationsType<unknown>) => {
-    if (parentContext && parentContext.addTranslations) {
-      parentContext.addTranslations(newTranslations);
-    }
-    setTranslations(merge(translations, flattenTranslations(newTranslations)));
-  }, [parentContext]);
+  const addTranslations = useCallback(
+    (newTranslations: TranslationsType<unknown>) => {
+      if (parentContext && parentContext.addTranslations) {
+        parentContext.addTranslations(newTranslations);
+      }
+      setTranslations(merge(translations, flattenTranslations(newTranslations)));
+    },
+    [parentContext, translations],
+  );
 
-  const setCurrentLanguage = useCallback((lang: string) => {
-    if (parentContext && parentContext.setLanguage) {
-      parentContext.setLanguage(lang);
-    }
-    setLanguage(lang);
-  }, [parentContext]);
+  const setCurrentLanguage = useCallback(
+    (lang: string) => {
+      if (parentContext && parentContext.setLanguage) {
+        parentContext.setLanguage(lang);
+      }
+      setLanguage(lang);
+    },
+    [parentContext],
+  );
 
-  const mergedValue = {
-    translations: parentContext?.translations || translations,
-    currentLanguage: parentContext?.currentLanguage || language,
-    setLanguage: setCurrentLanguage,
-    addTranslations,
-  };
+  const mergedValue = useMemo(
+    () => ({
+      translations: parentContext?.translations ?? translations,
+      currentLanguage: parentContext?.currentLanguage || language,
+      setLanguage: setCurrentLanguage,
+      addTranslations,
+    }),
+    [
+      parentContext?.translations,
+      parentContext?.currentLanguage,
+      translations,
+      language,
+      setCurrentLanguage,
+      addTranslations,
+    ],
+  );
 
   return (
     <TranslationsContext.Provider value={mergedValue}>
       <IntlProvider
-          defaultLocale={defaultLocale}
-          locale={mergedValue.currentLanguage}
-          messages={mergedValue.translations[language]}
+        defaultLocale={defaultLocale}
+        locale={mergedValue.currentLanguage}
+        messages={mergedValue.translations[language]}
       >
         {children}
       </IntlProvider>
