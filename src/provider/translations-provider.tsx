@@ -1,89 +1,108 @@
-import React, { createContext, FC, useCallback, useContext, useEffect, useState } from 'react';
+import React, { createContext, FC, PropsWithChildren, useCallback, useContext, useMemo, useState } from 'react';
 import { IntlProvider } from 'react-intl';
-
 import merge from 'lodash/merge';
-import { flattenObject } from '../utils';
-import { LanguageProviderProps, TranslationsContextType, TranslationState, TranslationsType } from './types';
+
+import { flattenTranslations } from '../utils';
+import type { TranslationsContextType, TranslationsType } from '../types';
 
 export const DEFAULT_LANGUAGE = window ? window.navigator.language.replace(/^([\w]+)(-.*)/gi, '$1') : 'en';
 
-export const TranslationsContext = createContext<TranslationsContextType>({
-    translations: {},
-    currentLanguage: DEFAULT_LANGUAGE,
-    setLanguage: () => undefined,
-    addTranslations: () => undefined,
-});
+export const TranslationsContext = createContext<TranslationsContextType | undefined>(undefined);
 
-export const useCreateTranslations = (initialLanguage: string, initialTranslations: TranslationsType) => {
-    const [{ translations, currentLanguage }, updateTranslationState] = useState<TranslationState>({
-        translations: initialTranslations,
-        currentLanguage: initialLanguage,
-    });
-
-    const addTranslations = useCallback(
-        (newTranslations: TranslationsType<unknown>) => {
-            const flattenedLang = Object.keys(newTranslations).reduce<TranslationsType>((acc, lang: string) => {
-                acc[lang] = flattenObject(newTranslations[lang]);
-                return acc;
-            }, {});
-            updateTranslationState({
-                translations: merge(newTranslations, flattenedLang),
-                currentLanguage,
-            });
-        },
-        [currentLanguage]
-    );
-
-    const setLanguage = (lang: string) => {
-        updateTranslationState({
-            translations,
-            currentLanguage: lang,
-        });
-    };
-
-    useEffect(() => {
-        addTranslations(initialTranslations);
-    }, [addTranslations, initialTranslations]);
-
-    return {
-        translations,
-        currentLanguage,
-        setLanguage,
-        addTranslations,
-    };
-};
-
+/**
+ * @description Hook to access the TranslationsContext. Can only be used within a TranslationsProvider.
+ * @returns {TranslationsContextType} The translations context
+ */
 export const useTranslations = (): TranslationsContextType => {
-    return useContext(TranslationsContext);
+  const context = useContext(TranslationsContext);
+  if (!context) {
+    throw new Error('useTranslations must be used within a TranslationsProvider');
+  }
+  return context;
 };
 
-export const TranslationsProvider: FC<LanguageProviderProps> = ({
-    initialLanguage,
-    defaultLocale,
-    initialTranslations,
-    children,
+/**
+ * @description Properties to set up a language provider
+ */
+export interface TranslationsProviderProps extends PropsWithChildren {
+  /**
+   * @description Default locale that is passed to react-intl
+   */
+  defaultLocale?: string;
+  /**
+   * @description Initial language to use in the provider. If not set and there is no parent provider, the browser
+   * language is used or 'en' as fallback if no browser language can be detected
+   */
+  initialLanguage?: string;
+  /**
+   * @description Initial translations to use in the provider.
+   */
+  initialTranslations: TranslationsType;
+}
+
+export const TranslationsProvider: FC<TranslationsProviderProps> = ({
+  children,
+  defaultLocale,
+  initialLanguage,
+  initialTranslations,
 }) => {
-    const translations = useCreateTranslations(initialLanguage, initialTranslations);
+  const parentContext = useContext(TranslationsContext);
+  const [translations, setTranslations] = useState<TranslationsType>(() => {
+    if (parentContext) {
+      parentContext.addTranslations(initialTranslations);
+    }
+    return flattenTranslations(initialTranslations);
+  });
+  const [language, setLanguage] = useState<string>(
+    parentContext?.currentLanguage || initialLanguage || DEFAULT_LANGUAGE,
+  );
 
-    const { setLanguage } = useTranslations();
+  const addTranslations = useCallback(
+    (newTranslations: TranslationsType<unknown>) => {
+      if (parentContext && parentContext.addTranslations) {
+        parentContext.addTranslations(newTranslations);
+      }
+      setTranslations(merge(translations, flattenTranslations(newTranslations)));
+    },
+    [parentContext, translations],
+  );
 
-    useEffect(() => {
-        if (initialLanguage) {
-            setLanguage(initialLanguage);
-        }
-    }, [initialLanguage, setLanguage]);
+  const setCurrentLanguage = useCallback(
+    (lang: string) => {
+      if (parentContext && parentContext.setLanguage) {
+        parentContext.setLanguage(lang);
+      }
+      setLanguage(lang);
+    },
+    [parentContext],
+  );
 
-    const { currentLanguage, translations: currentTranslations } = translations;
+  const mergedValue = useMemo(
+    () => ({
+      translations: parentContext?.translations ?? translations,
+      currentLanguage: parentContext?.currentLanguage || language,
+      setLanguage: setCurrentLanguage,
+      addTranslations,
+    }),
+    [
+      parentContext?.translations,
+      parentContext?.currentLanguage,
+      translations,
+      language,
+      setCurrentLanguage,
+      addTranslations,
+    ],
+  );
 
-    return (
-        <TranslationsContext.Provider value={translations}>
-            <IntlProvider
-                defaultLocale={defaultLocale}
-                locale={currentLanguage}
-                messages={currentTranslations[currentLanguage]}
-            >
-                {children}
-            </IntlProvider>
-        </TranslationsContext.Provider>
-    );
+  return (
+    <TranslationsContext.Provider value={mergedValue}>
+      <IntlProvider
+        defaultLocale={defaultLocale}
+        locale={mergedValue.currentLanguage}
+        messages={mergedValue.translations[language]}
+      >
+        {children}
+      </IntlProvider>
+    </TranslationsContext.Provider>
+  );
 };
