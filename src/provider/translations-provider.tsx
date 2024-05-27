@@ -5,7 +5,10 @@ import merge from 'lodash/merge';
 import { flattenTranslations } from '../utils';
 import type { TranslationsContextType, TranslationsType } from '../types';
 
-export const DEFAULT_LANGUAGE = window ? window.navigator.language.replace(/^([\w]+)(-.*)/gi, '$1') : 'en';
+const windowGlobal = typeof window !== 'undefined' ? window : undefined;
+export const DEFAULT_LANGUAGE = windowGlobal?.navigator
+  ? windowGlobal.navigator.language.replace(/^([\w]+)(-.*)/gi, '$1')
+  : 'en';
 
 export const TranslationsContext = createContext<TranslationsContextType | undefined>(undefined);
 
